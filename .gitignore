@@ -1,0 +1,24 @@
+# ==========================================
+# SpleenSeg_UNet .gitignore 配置
+# ==========================================
+
+dataset/
+!dataset/.gitkeep
+*.nii
+*.nii.gz
+*.dcm
+
+output/logs
+!output/logs/.gitkeep
+output/weights/
+!output/weights/.gitkeep
+output/predictions/
+!output/predictions/.gitkeep
+
+predictions/
+*.pth
+*.pt
+latest_checkpoint.pth
+
+__pycache__/
+.idea/
