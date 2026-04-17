@@ -1,5 +1,5 @@
 import torch
-import SimpleITK as sitk  # 医疗影像界的最强搬运工
+import SimpleITK as sitk
 import numpy as np
 import time
 from utils.config_utils import load_config, get_args
@@ -10,7 +10,7 @@ from scipy.ndimage import label
 args = get_args()
 config = load_config(args.config)
 print("=== Pre-flight Checklist ===")
-# 1. 硬件配置 (继续使用你打通的 DirectML)
+# 1. 硬件配置
 try:
     import torch_directml
     device = torch_directml.device()

@@ -7,9 +7,8 @@ opencv-python
 SimpleITK~=2.5.3
 nibabel
 
-torch-directml
 
-torch~=2.3.1+cpu
+torch
 torchvision
 torchaudio
 

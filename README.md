@@ -1,4 +1,4 @@
-# 基于U-Net的脾脏分割（Spleen Segmentation Based on U-Net）SpleenSeg-UNet
+# 基于U-Net的脾脏分割（Spleen Segmentation Based on U-Net）
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org/)
 ## 项目简介 / Introduction/Abstract
@@ -12,7 +12,8 @@
 3. **[跳跃连接机制 (Skip Connections)]**：在 U 型结构的同一层级水平搭建桥梁，将编码器中保留了丰富高分辨率空间细节的浅层特征图，直接传递并拼接 (Concatenation) 到解码器对应的特征图中。这一机制极大地弥补了下采样过程中不可逆的空间信息丢失，使模型能够精准还原脾脏的复杂边缘形态。
 4. **[上采样解码器 (Decoder)]**：采用转置卷积 (ConvTranspose2d) 作为上采样算子，逐层将深层语义特征图的空间分辨率放大 2 倍并减半通道数。在融合了跳跃连接传来的细粒度特征后，再经过卷积层进行特征解码，最后通过 $1 \times 1$ 卷积层将通道数降维至类别数 (单通道)，输出脾脏的 2D 分割掩膜 (Mask) 概率图。
 ## 结果与性能 / Results
-该模型通过 10 轮的训练，在验证集上达到了 **87.53** 的 Dice 分数。
+该模型通过 10 轮的训练，在验证集上达到了 **88.98%** 的 Dice 分数。在测试集上达到了 **93.07%** 的 Dice 分数。
+
 
 
 ## 环境配置 / Installation
@@ -30,18 +31,32 @@
 * scipy == 1.13.1
 * pyyaml == 6.0.3
 * tensorboard == 2.2
+
 我们推荐使用 Conda 管理环境，具体命令如下：
 ### 1、克隆仓库
 ```bash
-git clone [https://github.com/nbplus12345/SpleenSeg-UNet.git](https://github.com/nbplus12345/SpleenSeg-UNet.git)
-cd SpleenSeg-UNet
+git clone https://github.com/nbplus12345/SpleenSeg_UNet.git
+cd SpleenSeg_UNet
 ```
 ### 2、创建激活conda环境
 ```bash
 conda create -n SpleenSeg-UNet python=3.9 -y
 conda activate SpleenSeg-UNet
 ```
-### 3、安装核心依赖 (包括 PyTorch 和医学图像处理库等)
+### 3. 安装核心深度学习框架 (PyTorch)
+请根据你电脑的硬件情况，选择以下【其中一种】方式安装 PyTorch：
+
+* 选项 A：你有 NVIDIA 独立显卡（推荐，速度最快）
+```Bash
+pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+```
+* 选项 B：你只有 CPU，或者使用 Mac 电脑，则跳过该步骤
+* 选项 C：你使用 AMD 显卡或想使用 DirectML 后端
+```Bash
+pip install torch torchvision torchaudio
+pip install torch-directml
+```
+### 3、安装项目依赖 (一键安装剩余的依赖)
 ```bash
 pip install -r requirements.txt
 ```
@@ -78,20 +93,24 @@ dataset/
     ├── images/
     └── labels/
 ```
+6. 由于本项目采用的是 2D U-Net，我们需要将 3D 的 `.nii.gz` 数据在 Z 轴上逐层切分为 2D 的 `.npy` 数组，并进行窗宽窗位（Windowing）归一化以及滤除无效的空白背景切片。请运行以下预处理脚本：
+```Bash
+python data/data_preprocess_utils.py
+```
 ## 训练与测试 / Training & Evaluation
 ### 1. 训练 (Training)
 对于各类超参数以及数据地址，可以在 config/config.yaml 中修改，也可以增加新的 yaml 文件。训练命令如下：
 ```Bash
-python train.py --config ../config/config.yaml
+python train.py --config ./config/config.yaml
 ```
 本模型带有 **断点续训** 的功能，每轮自动保存 checkpoint ，但训练中断需要重新训练时，需要在 config.yaml 中修改 **resume_training** 为 true 。
 ### 2. 测试与评估 (Evaluation)
 评估脚本会自动计算平均 Dice (DSC) 指标：
 ```Bash
-python evaluate.py --config ../config/config.yaml
+python evaluate.py --config ./config/config.yaml
 ```
 ### 3. 查看分割结果（Segmentation）
 在 config/config.yaml 中配置待分割的 CT 文件路径以及输出路径，运行分割脚本：
 ```Bash
-python inference.py --config ../config/config.yaml
+python inference.py --config ./config/config.yaml
 ```

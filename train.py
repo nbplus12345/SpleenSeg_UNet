@@ -66,7 +66,7 @@ logger.info(f"[INFO] TensorBoard monitoring activated. Logs saved at: {tb_log_di
 global_step = 0
 
 # 早停参数
-lowest_val_loss = float('inf')  # 初始设为无穷大
+highest_val_dice = 0.0
 patience = config.train.patience
 max_epochs = config.train.epochs
 logger.info(f"[INFO] Early Stopping configured. Patience: {patience} epochs, max_epochs: {max_epochs}")
@@ -81,7 +81,7 @@ if config.train.resume_training and os.path.exists(config.paths.checkpoint_path)
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     start_epoch = checkpoint['epoch'] + 1  # 从断电的下一轮开始
-    lowest_val_loss = checkpoint['lowest_val_loss']
+    highest_val_dice = checkpoint['highest_val_dice']
     counter = checkpoint['counter']
     logger.info(f"[INFO] Find Checkpoint {config.paths.checkpoint_path}, Continue training from epoch {start_epoch + 1} .")
 
@@ -97,7 +97,6 @@ for epoch in range(start_epoch, max_epochs):
     logger.info("")
     logger.info(f"[Epoch {epoch + 1:03d}/{max_epochs:03d}]")
     epoch_start_time = time.time()
-    batch_total_loss = 0.0
     epoch_total_loss = 0.0
 
     train_pbar = tqdm(train_loader, desc=f"[Train]", **TQDM_BASE_CONFIG)
@@ -116,7 +115,6 @@ for epoch in range(start_epoch, max_epochs):
         # 画瞬时 Loss 曲线 (横坐标是步数 global_step)
         board_writer.add_scalar("Train/Step_Loss", loss.item(), global_step)
         train_pbar.set_postfix({"Loss": f"{loss.item():.4f}"})
-        batch_total_loss += loss.item()
         epoch_total_loss += loss.item()
 
     epoch_avg_train_loss = epoch_total_loss / len(train_loader)
@@ -126,24 +124,39 @@ for epoch in range(start_epoch, max_epochs):
 
     # --- 验证阶段 ---
     model.eval()
-    val_total_dice = 0.0
+    val_total_loss = 0.0
+    val_total_intersection = 0.0  # 记录全局交集
+    val_total_union = 0.0  # 记录全局并集
 
     with torch.no_grad():  # 考试时不准改答案，所以关掉梯度计算，省内存
         val_pbar = tqdm(val_loader, desc=f"[Val]", **TQDM_BASE_CONFIG)
         for images, labels in val_pbar:
             images = images.to(device)
             labels = labels.to(device)
-            outputs = torch.sigmoid(model(images))
-            # 计算这一波的 Dice 得分（注意：Dice 得分 = 1 - Dice Loss）
-            # 我们之前写的 loss.py 返回的是 1 - dice，所以这里反向算回来
-            val_batch_loss = criterion(outputs, labels)
-            val_total_dice += (1 - val_batch_loss.item())
 
-    # 计算平均成绩
-    val_avg_dice = val_total_dice / len(val_loader)
-    val_avg_loss = 1 - val_avg_dice
+            # 1. 模型预测与 Loss 计算 (Loss用软概率)
+            outputs = torch.sigmoid(model(images))
+            val_batch_loss = criterion(outputs, labels)
+            val_total_loss += val_batch_loss.item()
+
+            # 2. 计算 Dice 用的交并集 (Metric用硬分类：非黑即白)
+            preds = (outputs > 0.5).float()  # 大于 0.5 认为是脾脏，变成 1和0
+
+            # 统计当前 batch 的交集和并集
+            intersection = (preds * labels).sum().item()
+            union = preds.sum().item() + labels.sum().item()
+
+            val_total_intersection += intersection
+            val_total_union += union
+
+    # 3. 计算整个验证集的平均 Loss 和 全局 Dice
+    val_avg_loss = val_total_loss / len(val_loader)
+    # 防止分母为0 (加入一个极小值 1e-5)
+    val_avg_dice = (2.0 * val_total_intersection + 1e-5) / (val_total_union + 1e-5)
     # 画验证集的loss (横坐标是当前的 epoch)
     board_writer.add_scalar("Val/Epoch_Loss", val_avg_loss, epoch)
+    # 也可以把真实的全局 Dice 画到面板上，方便观察
+    board_writer.add_scalar("Val/Epoch_Dice", val_avg_dice, epoch)
     epoch_time = time.time() - epoch_start_time
     # 打印当前 Epoch 的综合成绩单
     logger.info("========================================================")
@@ -156,14 +169,14 @@ for epoch in range(start_epoch, max_epochs):
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
-        'lowest_val_loss': lowest_val_loss,
+        'highest_val_dice': highest_val_dice,
         'counter': counter
     }
     torch.save(checkpoint, "latest_checkpoint.pth")  # 覆盖保存最新的快照
 
-    if val_avg_loss < lowest_val_loss:
+    if val_avg_dice > highest_val_dice:
         # 情况 A：模型进步了！
-        lowest_val_loss = val_avg_loss
+        highest_val_dice = val_avg_dice
         counter = 0  # 重置耐心计数器
         torch.save(model.state_dict(), config.paths.weight_path)
         logger.info(f"[SAVE] New best record! Model saved!")
