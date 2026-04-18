@@ -56,6 +56,9 @@ criterion = DiceLoss()
 logger.info(f"[INFO] Criterion: {criterion.__class__.__name__}")
 optimizer = optim.SGD(model.parameters(), lr=config.train.lr, momentum=config.train.momentum, weight_decay=1e-4, foreach=False)
 logger.info(f"[INFO] Optimizer configured: SGD (lr={config.train.lr}, momentum={config.train.momentum})")
+# 学习率调度器，当验证集 loss 连续 2 个 epoch 不下降时，把学习率乘以 0.5
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2, verbose=True)
+logger.info("[INFO] Learning Rate Scheduler configured: ReduceLROnPlateau")
 
 # 可视化
 # 实例化 TensorBoard 画笔
@@ -162,6 +165,12 @@ for epoch in range(start_epoch, max_epochs):
     logger.info("========================================================")
     logger.info(f"[Epoch Summary] | Train Loss: {epoch_avg_train_loss:.4f}  | Val Loss: {val_avg_loss:.4f}")
     logger.info(f"                | Val Dice  : {val_avg_dice:.4f}  | Time    : {int(epoch_time // 60)}m {int(epoch_time % 60):02d}s")
+
+    # 把当前 epoch 的验证集 loss 喂给调度器
+    scheduler.step(val_avg_loss)
+    # 获取当前最新的学习率，打印到日志里，方便你监控
+    current_lr = optimizer.param_groups[0]['lr']
+    logger.info(f"                | Learning Rate: {current_lr}")
     logger.info("========================================================")
 
     # 断点续训
@@ -172,6 +181,8 @@ for epoch in range(start_epoch, max_epochs):
         'highest_val_dice': highest_val_dice,
         'counter': counter
     }
+    weight_dir = os.path.dirname(config.paths.weight_path)
+    checkpoint_path = os.path.join(weight_dir, "latest_checkpoint.pth")
     torch.save(checkpoint, "latest_checkpoint.pth")  # 覆盖保存最新的快照
 
     if val_avg_dice > highest_val_dice:

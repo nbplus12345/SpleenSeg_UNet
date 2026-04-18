@@ -11,7 +11,7 @@ paths:
   weight_path: "./output/weights/SpleenSeg_UNet_model.pth"
   # 分割完输出标签的路径
   output_path: "./output/predictions/segmentation_spleen_label.nii.gz"
-  checkpoint_path: "latest_checkpoint.pth"
+  checkpoint_path: "./output/weights/latest_checkpoint.pth"
 
 # 2. 训练专属配置
 train:
