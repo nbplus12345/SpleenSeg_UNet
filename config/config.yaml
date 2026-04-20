@@ -2,6 +2,7 @@
 
 # 1. 统一的路径管理中心
 paths:
+  data_root_dir: "./dataset"
   train_dir: "./dataset/train_2d"
   val_dir: "./dataset/val_2d"
   test_image_dir: "./dataset/test/images"
@@ -11,10 +12,11 @@ paths:
   weight_path: "./output/weights/SpleenSeg_UNet_model.pth"
   # 分割完输出标签的路径
   output_path: "./output/predictions/segmentation_spleen_label.nii.gz"
-  checkpoint_path: "latest_checkpoint.pth"
+  checkpoint_path: "./output/weights/latest_checkpoint.pth"
 
 # 2. 训练专属配置
 train:
+  num_worker: 0
   batch_size: 2
   lr: 0.001
   momentum: 0.9
