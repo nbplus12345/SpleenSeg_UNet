@@ -179,7 +179,7 @@ for epoch in range(max_epochs):
     }
     weight_dir = os.path.dirname(config.paths.weight_path)
     checkpoint_path = os.path.join(weight_dir, "latest_checkpoint.pth")
-    torch.save(checkpoint, "latest_checkpoint.pth")  # 覆盖保存最新的快照
+    torch.save(checkpoint, checkpoint_path)  # 覆盖保存最新的快照
 
     # 早停与权重保存逻辑
     if val_avg_dice > highest_val_dice:

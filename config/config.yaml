@@ -3,8 +3,6 @@
 # 1. 统一的路径管理中心
 paths:
   data_root_dir: "./dataset"
-  train_dir: "./dataset/train_2d"
-  val_dir: "./dataset/val_2d"
   test_image_dir: "./dataset/test/images"
   test_label_dir: "./dataset/test/labels"
   # 需要进行分割的 CT 文件
