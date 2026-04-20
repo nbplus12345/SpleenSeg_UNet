@@ -2,6 +2,7 @@
 
 # 1. 统一的路径管理中心
 paths:
+  data_root_dir: "./dataset"
   train_dir: "./dataset/train_2d"
   val_dir: "./dataset/val_2d"
   test_image_dir: "./dataset/test/images"
@@ -15,6 +16,7 @@ paths:
 
 # 2. 训练专属配置
 train:
+  num_worker: 0
   batch_size: 2
   lr: 0.001
   momentum: 0.9
