@@ -10,9 +10,7 @@ nibabel
 
 torch
 torchvision
-torchaudio
 
-monai
 scipy~=1.13.1
 pyyaml
 tensorboard

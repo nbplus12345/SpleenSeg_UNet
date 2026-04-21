@@ -13,8 +13,7 @@ from utils.config_utils import load_config, get_args
 import time
 
 
-args = get_args()
-config = load_config(args.config)
+config = load_config(get_args().config)
 current_time = time.strftime("%Y%m%d_%H%M")
 log_manager = Logger(logger_name="SpleenSeg_UNet", log_file=f"output/logs/SpleenSeg_UNet_train_{current_time}.log")
 logger = log_manager.get_logger()
@@ -83,7 +82,7 @@ if config.train.resume_training and os.path.exists(config.paths.checkpoint_path)
     # 2. 依次把记忆注入到对应的身体里
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    start_epoch = checkpoint['epoch'] + 1  # 从断电的下一轮开始
+    start_epoch = checkpoint['epoch'] + 1  # 从断点的下一轮开始
     highest_val_dice = checkpoint['highest_val_dice']
     counter = checkpoint['counter']
     logger.info(f"[INFO] Find Checkpoint {config.paths.checkpoint_path}, Continue training from epoch {start_epoch + 1} .")
@@ -96,7 +95,7 @@ logger.info("===== Training Started ====✈")
 for epoch in range(start_epoch, max_epochs):
 
     # --- 训练阶段 ---
-    model.train()  # 告诉模型：现在是学习状态
+    model.train()
     logger.info("")
     logger.info(f"[Epoch {epoch + 1:03d}/{max_epochs:03d}]")
     epoch_start_time = time.time()
@@ -110,7 +109,7 @@ for epoch in range(start_epoch, max_epochs):
 
         optimizer.zero_grad()
         outputs = model(images)
-        outputs = torch.sigmoid(outputs)    # 二分类的激活函数
+        outputs = torch.sigmoid(outputs)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
@@ -168,7 +167,7 @@ for epoch in range(start_epoch, max_epochs):
 
     # 把当前 epoch 的验证集 loss 喂给调度器
     scheduler.step(val_avg_loss)
-    # 获取当前最新的学习率，打印到日志里，方便你监控
+    # 获取当前最新的学习率，打印到日志里
     current_lr = optimizer.param_groups[0]['lr']
     logger.info(f"                | Learning Rate: {current_lr}")
     logger.info("========================================================")
@@ -186,14 +185,14 @@ for epoch in range(start_epoch, max_epochs):
     torch.save(checkpoint, "latest_checkpoint.pth")  # 覆盖保存最新的快照
 
     if val_avg_dice > highest_val_dice:
-        # 情况 A：模型进步了！
+        # 情况 A：模型进步了
         highest_val_dice = val_avg_dice
-        counter = 0  # 重置耐心计数器
+        counter = 0  # 重置计数器
         torch.save(model.state_dict(), config.paths.weight_path)
         logger.info(f"[SAVE] New best record! Model saved!")
 
     else:
-        # 情况 B：模型没进步（甚至反弹了）
+        # 情况 B：模型没进步
         counter += 1
         logger.info(f"[WARN] No improvement. Patience: {counter}/{patience}")
         if counter >= patience:

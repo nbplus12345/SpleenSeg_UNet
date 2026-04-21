@@ -37,13 +37,13 @@ img_array = sitk.GetArrayFromImage(original_image)
 z_slices, h, w = img_array.shape
 print(f"[INFO] Load CT: {config.paths.CT_dir} | Size : [ {z_slices} , {h} , {w} ]")
 
-# 准备一个全黑的、一模一样大小的 3D 盒子，用来装我们预测出来的脾脏
+# 定义一个与原数据一样大小的预测张量
 pred_3d_mask = np.zeros_like(img_array, dtype=np.uint8)
 
 print("============================")
 start_time = time.time()
 print("==== Segmentation Started ===✈")
-with torch.no_grad():  # 绝对不能记录梯度，不然显存瞬间爆炸
+with torch.no_grad():
     for i in range(z_slices):
         # 抽出一张 2D 切片
         slice_2d = img_array[i, :, :]
@@ -71,7 +71,7 @@ if num_features > 0:
     volumes = np.bincount(labeled_array.ravel())[1:]
     # 3. 找到体积最大的那个区块的标签号
     biggest_label = volumes.argmax() + 1
-    # 4. 魔法时刻：只保留最大的区块，其他全部变成 0
+    # 4. 只保留最大的区块，其他全部变成 0
     pred_3d_mask = (labeled_array == biggest_label).astype(np.uint8)
     print(f"[INFO] Cleanup complete! Clean {num_features - 1} fragments.")
 else:
@@ -80,7 +80,6 @@ else:
 # 把 Numpy 矩阵变回医疗影像格式
 predicted_sitk_img = sitk.GetImageFromArray(pred_3d_mask)
 
-# 原样复制物理信息！
 # 这一步极其关键。它把原图的“方向、像素间距、三维坐标原点”原封不动地复制给预测结果。
 predicted_sitk_img.CopyInformation(original_image)
 
