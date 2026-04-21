@@ -1,4 +1,4 @@
-    # 基于U-Net的脾脏分割（Spleen Segmentation Based on U-Net）
+# 基于U-Net的脾脏分割（Spleen Segmentation Based on U-Net）
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org/)
 ## 项目简介 / Introduction/Abstract
