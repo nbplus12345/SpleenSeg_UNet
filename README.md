@@ -6,8 +6,8 @@
 本项目是一个基于 **2D U-Net** 的脾脏器官分割模型，主要针对 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集图像进行自动分割。本人意在通过该项目掌握 **2D U-Net** 网络的构造与使用。
 
 ## 快速预览 / Quick Preview
-![b43f0d8449f60dcb4a7a45e34febfa2a.png](b43f0d8449f60dcb4a7a45e34febfa2a.png)
-![8d537b92bdbabca03006b9111863ec001.png](8d537b92bdbabca03006b9111863ec001.png)
+![tensorboard_preview.png](tensorboard_preview.png)
+![training_curves.png](training_curves.png)
 ## 网络架构 / Network Architecture
 本项目使用经典的 **U-Net** 网络，基本构造如下。
 ![img.png](img.png)
@@ -20,8 +20,7 @@
 该模型通过 11 轮的训练，在验证集上达到了 **94.44%** 的 Dice 分数。在测试集上达到了 **94.74%** 的 Dice 分数，详情见 **logs/** 中的训练与评估日志。
 
 **分割后效果如图所示：**
-![itksnapImage.png](itksnapImage.png)
-
+![spleen_3d_segmentation.png](spleen_3d_segmentation.png)
 ## 环境配置 / Installation
 
 本项目具有**高兼容性与跨平台适配**，已在以下多种操作系统与硬件加速环境中完成了严格的训练与测试：
@@ -62,7 +61,7 @@ pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu12
 pip install torch torchvision torchaudio
 pip install torch-directml
 ```
-### 3、安装项目依赖 (一键安装剩余的依赖)
+### 4、安装项目依赖 (一键安装剩余的依赖)
 ```bash
 pip install -r requirements.txt
 ```
