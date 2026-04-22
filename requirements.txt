@@ -7,8 +7,7 @@ opencv-python
 SimpleITK~=2.5.3
 nibabel
 
-
-torch
+torch>= 2.0
 torchvision
 
 scipy~=1.13.1

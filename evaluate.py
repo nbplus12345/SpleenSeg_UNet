@@ -89,7 +89,7 @@ with torch.no_grad():
         patient_dice = calculate_3d_dice(pred_3d_mask, gt_mask)
         total_dice += patient_dice
         fragments_count = max(0, num_features - 1)  # 防bug代码
-        logger.debug(f"[{idx + 1}/{len(patient_files)}] {filename} | Dice: {patient_dice * 100:.2f}% | find fragments: {num_features - 1} ")
+        logger.info(f"[{idx + 1}/{len(patient_files)}] {filename} | Dice: {patient_dice * 100:.2f}% | find fragments: {num_features - 1} ")
 
 logger.info("")
 logger.info("== Evaluation Summary ==")

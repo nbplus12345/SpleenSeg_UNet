@@ -56,7 +56,7 @@ logger.info(f"[INFO] Criterion: {criterion.__class__.__name__}")
 optimizer = optim.SGD(model.parameters(), lr=config.train.lr, momentum=config.train.momentum, weight_decay=1e-4, foreach=False)
 logger.info(f"[INFO] Optimizer configured: SGD (lr={config.train.lr}, momentum={config.train.momentum})")
 # 学习率调度器，当验证集 loss 连续 2 个 epoch 不下降时，把学习率乘以 0.5
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2, verbose=True)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
 logger.info("[INFO] Learning Rate Scheduler configured: ReduceLROnPlateau")
 
 # 可视化
@@ -182,7 +182,7 @@ for epoch in range(start_epoch, max_epochs):
     }
     weight_dir = os.path.dirname(config.paths.weight_path)
     checkpoint_path = os.path.join(weight_dir, "latest_checkpoint.pth")
-    torch.save(checkpoint, "latest_checkpoint.pth")  # 覆盖保存最新的快照
+    torch.save(checkpoint, checkpoint_path)  # 覆盖保存最新的快照
 
     if val_avg_dice > highest_val_dice:
         # 情况 A：模型进步了

@@ -17,7 +17,6 @@ output/weights/*
 output/predictions/*
 !output/predictions/.gitkeep
 
-predictions/
 *.pth
 *.pt
 latest_checkpoint.pth

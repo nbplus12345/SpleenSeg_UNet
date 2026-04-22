@@ -1,41 +1,47 @@
-# 基于U-Net的脾脏分割（Spleen Segmentation Based on U-Net）
+# 基于 2D U-Net的脾脏分割（Spleen Segmentation Based on 2D U-Net）
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org/)
-## 项目简介 / Introduction/Abstract
-本项目是一个基于 **U-Net** 的脾脏器官分割模型，主要针对 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集图像进行自动分割。本人意在通过该项目掌握 **U-Net** 网络的构造与使用。
+![UNet](https://img.shields.io/badge/Model-U--Net-success?style=flat-square)
+## 项目简介 / Introduction
+本项目是一个基于 **2D U-Net** 的脾脏器官分割模型，主要针对 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集图像进行自动分割。本人意在通过该项目掌握 **2D U-Net** 网络的构造与使用。
+
+## 快速预览 / Quick Preview
+![b43f0d8449f60dcb4a7a45e34febfa2a.png](b43f0d8449f60dcb4a7a45e34febfa2a.png)
+![8d537b92bdbabca03006b9111863ec001.png](8d537b92bdbabca03006b9111863ec001.png)
 ## 网络架构 / Network Architecture
 本项目使用经典的 **U-Net** 网络，基本构造如下。
 ![img.png](img.png)
 如上图所示，我们的网络主要由以下几个核心组件构成： 
-1. **[双层卷积基础块 (DoubleConv)]**：由连续的两次 `Conv2d -> BatchNorm2d -> ReLU` 堆叠而成。作为贯穿整个网络的核心特征提取单元，它负责提取图像的局部纹理与结构特征，并借助批量归一化 (Batch Normalization) 显著缓解内部协变量偏移，加速模型收敛并提升在医疗影像上的训练稳定性。
-2. **[全卷积编码器 (Encoder)]**：采用 4 阶下采样结构。通过最大池化层 (Max Pooling) 逐层将图像空间尺寸减半，同时利用双层卷积将特征通道数从 64 逐级扩展至网络底部的 1024。该模块负责逐步扩大感受野，提取从浅层边缘轮廓到深层抽象语义的多尺度特征。 
-3. **[跳跃连接机制 (Skip Connections)]**：在 U 型结构的同一层级水平搭建桥梁，将编码器中保留了丰富高分辨率空间细节的浅层特征图，直接传递并拼接 (Concatenation) 到解码器对应的特征图中。这一机制极大地弥补了下采样过程中不可逆的空间信息丢失，使模型能够精准还原脾脏的复杂边缘形态。
+1. **[双层卷积基础块 (DoubleConv)]**：由连续的两次 `Conv2d -> BatchNorm2d -> ReLU` 堆叠而成。借助批量归一化 (Batch Normalization) 显著缓解内部协变量偏移。
+2. **[全卷积编码器 (Encoder)]**：采用 4 阶下采样结构。利用双层卷积将特征通道数从 64 逐级扩展至网络底部的 1024。
+3. **[跳跃连接机制 (Skip Connections)]**：在 U 型结构的同一层级水平搭建桥梁，将编码器中的浅层特征图，直接传递并拼接 (Concatenation) 到解码器对应的特征图中。
 4. **[上采样解码器 (Decoder)]**：采用转置卷积 (ConvTranspose2d) 作为上采样算子，逐层将深层语义特征图的空间分辨率放大 2 倍并减半通道数。在融合了跳跃连接传来的细粒度特征后，再经过卷积层进行特征解码，最后通过 $1 \times 1$ 卷积层将通道数降维至类别数 (单通道)，输出脾脏的 2D 分割掩膜 (Mask) 概率图。
 ## 结果与性能 / Results
-该模型通过 10 轮的训练，在验证集上达到了 **88.98%** 的 Dice 分数。在测试集上达到了 **93.07%** 的 Dice 分数。
+该模型通过 11 轮的训练，在验证集上达到了 **94.44%** 的 Dice 分数。在测试集上达到了 **94.74%** 的 Dice 分数，详情见 **logs/** 中的训练与评估日志。
 
-
+**分割后效果如图所示：**
+![itksnapImage.png](itksnapImage.png)
 
 ## 环境配置 / Installation
-本项目在以下环境中进行了严格的测试和验证： 
-* Python == 3.9.25 
-* PyTorch == 2.3.1+CPU
-* torchaudio == 2.3.1+CPU
-* torchvision == 0.18.1+cpu
-* Torch-Directml == 0.2.2.dev240614
-* numpy == 1.26.4
-* OpenCV-python == 4.13.0.92
-* MONAI == 1.5.2
-* SimpleITK == 2.5.3
-* Nibabel == 5.3.3
-* scipy == 1.13.1
-* pyyaml == 6.0.3
-* tensorboard == 2.2
+
+本项目具有**高兼容性与跨平台适配**，已在以下多种操作系统与硬件加速环境中完成了严格的训练与测试：
+
+| 操作系统               | 计算设备 / GPU                 | 硬件后端     | 版本                                            |
+| :----------------- | :------------------------- | :------- | :-------------------------------------------- |
+| **Windows 11**     | NVIDIA RTX 5060 8G         | CUDA     | PyTorch-2.8.0+cu128                           |
+| **Linux (Ubuntu)** | AMD Radeon RX 7900 XTX 24G | ROCm     |                                               |
+| **Windows 11**     | AMD Radeon 780M 核显         | DirectML | PyTorch-2.3.1+CPU<br>DirectML-0.2.2.dev240614 |
+
+### 核心依赖项
+详细的环境要求在 `requirements.txt` 中，核心库要求如下：
+* **Python** >= 3.9
+* **PyTorch** >= 2.0.0
+* **医学影像处理库**: SimpleITK, Nibabel
 
 我们推荐使用 Conda 管理环境，具体命令如下：
 ### 1、克隆仓库
 ```bash
-git clone https://github.com/nbplus12345/SpleenSeg_UNet.git
+git clone -b main --single-branch https://github.com/nbplus12345/SpleenSeg_UNet.git
 cd SpleenSeg_UNet
 ```
 ### 2、创建激活conda环境
@@ -93,7 +99,7 @@ dataset/
     ├── images/
     └── labels/
 ```
-6. 由于本项目采用的是 2D U-Net，我们需要将 3D 的 `.nii.gz` 数据在 Z 轴上逐层切分为 2D 的 `.npy` 数组，并进行窗宽窗位（Windowing）归一化以及滤除无效的空白背景切片。请运行以下预处理脚本：
+6. 由于本项目采用的是 2D U-Net，我们需要预先将 3D 的 `.nii.gz` 数据在 Z 轴上逐层切分为 2D 的 `.npy` 数组，并进行窗宽窗位（Windowing）归一化以及滤除无效的空白背景切片。请运行以下预处理脚本：
 ```Bash
 python data/data_preprocess_utils.py
 ```
@@ -103,7 +109,12 @@ python data/data_preprocess_utils.py
 ```Bash
 python train.py --config ./config/config.yaml
 ```
-本模型带有 **断点续训** 的功能，每轮自动保存 checkpoint ，但训练中断需要重新训练时，需要在 config.yaml 中修改 **resume_training** 为 true 。
+- 本模型带有 **断点续训** 的功能，每轮自动保存 checkpoint ，但训练中断需要重新训练时，需要在 config.yaml 中修改 **resume_training** 为 true 。
+- 本项目同时集成了 **TensorBoard** 进行实时可视化。在训练期间，你可以随时监控 Loss 曲线、验证集 Dice 系数的动态变化。打开一个新的终端，激活虚拟环境后输入以下命令即可启动监控面板：
+```bash
+tensorboard --logdir=output/tensorboard --reload_interval=30
+```
+*命令运行成功后，在浏览器中访问 `http://localhost:6006/` 即可进入可视化大屏。*
 ### 2. 测试与评估 (Evaluation)
 评估脚本会自动计算平均 Dice (DSC) 指标：
 ```Bash

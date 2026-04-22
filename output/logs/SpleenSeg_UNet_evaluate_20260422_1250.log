@@ -1,0 +1,20 @@
+[2026-04-22 12:50:03] 
+[2026-04-22 12:50:03] === Pre-flight Checklist ===
+[2026-04-22 12:50:03] [ERROR] Failed to load DirectML! Reason: No module named 'torch_directml'
+[2026-04-22 12:50:03] [INFO] Device set to: cuda
+[2026-04-22 12:50:03] [INFO] Model weight path is ./output/weights/SpleenSeg_UNet_model.pth
+[2026-04-22 12:50:03] [INFO] Dataset loaded. Test: 7 files
+[2026-04-22 12:50:03] ============================
+[2026-04-22 12:50:03] 
+[2026-04-22 12:50:03] ==== Evaluation Started ===✈
+[2026-04-22 12:50:11] [1/7] spleen_12.nii.gz | Dice: 96.55% | find fragments: 16 
+[2026-04-22 12:50:13] [2/7] spleen_19.nii.gz | Dice: 95.95% | find fragments: 8 
+[2026-04-22 12:50:17] [3/7] spleen_2.nii.gz | Dice: 97.07% | find fragments: 16 
+[2026-04-22 12:50:20] [4/7] spleen_26.nii.gz | Dice: 91.97% | find fragments: 3 
+[2026-04-22 12:50:25] [5/7] spleen_27.nii.gz | Dice: 87.08% | find fragments: 33 
+[2026-04-22 12:50:30] [6/7] spleen_29.nii.gz | Dice: 97.75% | find fragments: 15 
+[2026-04-22 12:50:32] [7/7] spleen_9.nii.gz | Dice: 96.78% | find fragments: 8 
+[2026-04-22 12:50:32] 
+[2026-04-22 12:50:32] == Evaluation Summary ==
+[2026-04-22 12:50:32] Average Dice : 94.74% | Time : 0m 28s
+[2026-04-22 12:50:32] ========================
