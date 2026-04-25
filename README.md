@@ -7,14 +7,18 @@
 本项目最初是一个基于纯 **PyTorch** 实现的 2D 脾脏器官分割模型，主要针对 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集图像进行自动分割。
 为满足医疗影像的工业级落地需求，本项目在底层架构上进行了**全盘重构**，全面接入了 **MONAI** 医疗深度学习框架，从“手工作坊式的 2D 脚本”跃升为“端到端 (End-to-End) 的 3D 医疗影像流水线”。
 本人意在通过该项目掌握 **U-Net** 网络以及 **MONAI** 框架的构造与使用。
+## 快速预览 / Quick Preview
+![train_monai](train_monai.png)
+![tensorboard_monai](tensorboard_monai.png)
 
 **本次 MONAI 重构的核心亮点包括：** 
 * **极速持久化缓存 (Persistent Caching)**：弃用原版产生大量 I/O 碎片的 `.npy` 中间文件，采用 `PersistentDataset` 实现带哈希校验的 3D 原图持久化缓存，完美兼顾极速读取与动态数据增强。 
 * **降维打击 (Sliding Window Inference)**：彻底消灭了原版评估代码中繁琐的手工 2D 切片与 3D 拼接循环。引入滑动窗口推理，支持动态 Batch 打包与边缘高斯平滑融合 (Gaussian Blending)。 
 * **声明式后处理 (Pipeline Post-processing)**：弃用原版基于 `scipy` 的连通域计算和 `SimpleITK` 的坐标拷贝，全面采用 MONAI 字典流水线，一键实现概率激活、二值化、最大连通域保留，并自动还原保存 NIfTI 空间物理元数据。
+* **引入了间隔验证机制**：优化了验证逻辑，从逐步验证切换为基于间隔的周期性验证，大幅减少了验证集的冗余计算，提升了整体训练效率。
 ## 网络架构 / Network Architecture
 本项目使用 **MONAI** 官方实现的 **U-Net** 网络，在保持经典“对称型”编码-解码结构的基础上，针对医疗影像特征进行了深度优化，基本构造如下：
-![img.png](img.png)
+![unet](img.png)
 如上图所示，我们网络的核心架构特性如下： 
 1. **残差单元集成 (Residual Units)**： 重构版将 `num_res_units` 设为 2。在每一层特征提取中引入了残差连接（Residual Learning），有效缓解了深层网络的梯度消失问题，使模型在验证集上的收敛速度较原版提升了约 30%。 
 2. **高性能算子组合**： 
@@ -23,36 +27,37 @@
 3. **多尺度特征对齐**： 通过 `channels=(64, 128, 256, 512, 1024)` 的 5 阶跨度设计，配合 `strides=(2, 2, 2, 2)` 的下采样策略，使网络能在大尺度解剖结构（脾脏整体位置）与细粒度局部特征（器官边界）之间取得最优平衡。 
 4. **轻量化跳跃连接 (Skip Connections)**： 优化了特征拼接（Concat）后的卷积逻辑，确保浅层空间信息能无损传递至解码器，从而实现像素级的精准边缘还原。
 ## 结果与性能 / Results
-该模型通过 10 轮的训练，在验证集上达到了 **88.98%** 的 Dice 分数。在测试集上达到了 **93.07%** 的 Dice 分数。
+得益于 MONAI 的动态数据增强（随机 3D 切片采样）与长时间周期的训练策略，本模型在约 200 轮（Epochs）的训练后，展现出了极强的泛化能力。
+该模型通过 230 轮的训练，在验证集上达到了 **95.59%** 的 Dice 分数。在测试集上达到了 **94.89%** 的 3D 平均 Dice 分数，完美对标甚至超越了原版离线 2D 切片的精度极限。详情见 **logs/** 中的训练与评估日志。
 
-
-
+**分割后效果如图所示：**
+![spleen_seg_monai](spleen_seg_monai.png)
 ## 环境配置 / Installation
-本项目在以下环境中进行了严格的测试和验证： 
-* Python == 3.9.25 
-* PyTorch == 2.3.1+CPU
-* torchaudio == 2.3.1+CPU
-* torchvision == 0.18.1+cpu
-* Torch-Directml == 0.2.2.dev240614
-* numpy == 1.26.4
-* OpenCV-python == 4.13.0.92
-* MONAI == 1.5.2
-* SimpleITK == 2.5.3
-* Nibabel == 5.3.3
-* scipy == 1.13.1
-* pyyaml == 6.0.3
-* tensorboard == 2.2
+
+本项目具有**高兼容性与跨平台适配**，已在以下多种操作系统与硬件加速环境中完成了严格的训练与测试：
+
+| 操作系统                           | 计算设备 / GPU                 | 硬件后端     | 版本                                            |
+| :----------------------------- | :------------------------- | :------- | :-------------------------------------------- |
+| **Windows 11**                 | NVIDIA RTX 5060 8G         | CUDA     | PyTorch-2.8.0+cu128                           |
+| **Linux (Ubuntu 24.04.4 LTS)** | AMD Radeon RX 7900 XTX 24G | ROCm     | PyTorch-2.11.0+rocm7.2                        |
+| **Windows 11**                 | AMD Radeon 780M 核显         | DirectML | PyTorch-2.3.1+CPU<br>DirectML-0.2.2.dev240614 |
+
+### 核心依赖项
+得益于全面接入 MONAI 医疗影像流水线，本重构版大幅精简了底层依赖，**彻底移除了原版对 `scipy`、`SimpleITK` 以及 `OpenCV` 的硬性依赖**，所有 3D I/O 读取、物理元数据保留与后处理操作均由 MONAI 原生接管，详细的环境要求在 `requirements.txt` 中，核心库要求如下：
+* **Python** >= 3.9
+* **PyTorch** >= 2.0.0
+* **MONAI** = 1.5.2
 
 我们推荐使用 Conda 管理环境，具体命令如下：
 ### 1、克隆仓库
 ```bash
-git clone https://github.com/nbplus12345/SpleenSeg_UNet.git
+git clone -b monai-version --single-branch https://github.com/nbplus12345/SpleenSeg_UNet.git
 cd SpleenSeg_UNet
 ```
 ### 2、创建激活conda环境
 ```bash
-conda create -n SpleenSeg-UNet python=3.9 -y
-conda activate SpleenSeg-UNet
+conda create -n SpleenSeg-UNet-monai python=3.9 -y
+conda activate SpleenSeg-UNet-monai
 ```
 ### 3. 安装核心深度学习框架 (PyTorch)
 请根据你电脑的硬件情况，选择以下【其中一种】方式安装 PyTorch：
@@ -121,3 +126,16 @@ python evaluate_monai.py --config ./config/config.yaml
 ```Bash
 python inference_monai.py --config ./config/config.yaml
 ```
+### 4. 实时训练监控（TensorBoard）
+本项目深度集成了 TensorBoard，用于实时监控训练/验证 Loss 以及 Dice 分数的 S 型爬升曲线。
+在训练开始后，重新打开一个终端并运行：
+```Bash
+tensorboard --logdir=./output/tensorboard --port=6006
+```
+打开浏览器访问 `http://localhost:6006` 即可查看。
+## 后续计划 (To-Do)
+---
+- [ ] 改进日志，记录显示整体训练时间
+- [ ] 使用 **Weights & Biases (W&B)** 代替 **TensorBoard**
+- [ ] 尝试引进 **AMP** 混合精度训练
+- [ ] 进入 **3D UNet** 训练

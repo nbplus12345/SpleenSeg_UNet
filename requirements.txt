@@ -7,6 +7,6 @@ nibabel
 torch
 torchvision
 
-monai
+monai=1.5.2
 pyyaml
 tensorboard
