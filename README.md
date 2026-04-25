@@ -25,11 +25,11 @@
 
 本项目具有**高兼容性与跨平台适配**，已在以下多种操作系统与硬件加速环境中完成了严格的训练与测试：
 
-| 操作系统               | 计算设备 / GPU                 | 硬件后端     | 版本                                            |
-| :----------------- | :------------------------- | :------- | :-------------------------------------------- |
-| **Windows 11**     | NVIDIA RTX 5060 8G         | CUDA     | PyTorch-2.8.0+cu128                           |
-| **Linux (Ubuntu)** | AMD Radeon RX 7900 XTX 24G | ROCm     |                                               |
-| **Windows 11**     | AMD Radeon 780M 核显         | DirectML | PyTorch-2.3.1+CPU<br>DirectML-0.2.2.dev240614 |
+| 操作系统                           | 计算设备 / GPU                 | 硬件后端     | 版本                                            |
+| :----------------------------- | :------------------------- | :------- | :-------------------------------------------- |
+| **Windows 11**                 | NVIDIA RTX 5060 8G         | CUDA     | PyTorch-2.8.0+cu128                           |
+| **Linux (Ubuntu 24.04.4 LTS)** | AMD Radeon RX 7900 XTX 24G | ROCm     | PyTorch-2.11.0+rocm7.2                        |
+| **Windows 11**                 | AMD Radeon 780M 核显         | DirectML | PyTorch-2.3.1+CPU<br>DirectML-0.2.2.dev240614 |
 
 ### 核心依赖项
 详细的环境要求在 `requirements.txt` 中，核心库要求如下：
@@ -124,3 +124,10 @@ python evaluate.py --config ./config/config.yaml
 ```Bash
 python inference.py --config ./config/config.yaml
 ```
+### 4. 实时训练监控（TensorBoard）
+本项目深度集成了 TensorBoard，用于实时监控训练/验证 Loss 以及 Dice 分数的 S 型爬升曲线。
+在训练开始后，重新打开一个终端并运行：
+```Bash
+tensorboard --logdir=./output/tensorboard --port=6006
+```
+打开浏览器访问 `http://localhost:6006` 即可查看。
