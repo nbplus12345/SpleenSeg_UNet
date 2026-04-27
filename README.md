@@ -4,7 +4,7 @@
 ![UNet](https://img.shields.io/badge/Model-U--Net-success?style=flat-square)
 ![MONAI|94](https://img.shields.io/badge/MONAI-v1.5.2-blue)
 ## 项目简介 / Introduction/Abstract
-本项目最初是一个基于纯 **PyTorch** 实现的 2D 脾脏器官分割模型，主要针对 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集图像进行自动分割。
+本项目最初是一个基于纯 **PyTorch** 实现的 2D 脾脏器官分割模型（相关代码仍保留在 [**`main`**](https://github.com/nbplus12345/SpleenSeg_UNet/tree/main) 分支 中），主要针对 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集图像进行自动分割。
 为满足医疗影像的工业级落地需求，本项目在底层架构上进行了**全盘重构**，全面接入了 **MONAI** 医疗深度学习框架，从“手工作坊式的 2D 脚本”跃升为“端到端 (End-to-End) 的 3D 医疗影像流水线”。
 本人意在通过该项目掌握 **U-Net** 网络以及 **MONAI** 框架的构造与使用。
 ## 快速预览 / Quick Preview
@@ -72,7 +72,7 @@ pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu12
 pip install torch torchvision torchaudio
 pip install torch-directml
 ```
-### 3、安装项目依赖 (一键安装剩余的依赖)
+### 4、安装项目依赖 (一键安装剩余的依赖)
 ```bash
 pip install -r requirements.txt
 ```
