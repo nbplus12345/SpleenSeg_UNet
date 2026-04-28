@@ -131,6 +131,9 @@ python evaluate_monai.py --config ./config/config.yaml
 ```
 ### 3. 生成信号鲁棒性可视化报告 (Signal Ablation)
 运行专门编写的绘图脚本，它将自动注入噪声并应用滤波器，生成包含空间域、频域 FFT 及分割轮廓叠加的超清对比大图 
+```Bash
+python visualize_signal_results.py
+```
 ### 4. 实时训练监控（TensorBoard）
 本项目深度集成了 TensorBoard，用于实时监控训练/验证 Loss 以及 Dice 分数的 S 型爬升曲线。
 在训练开始后，重新打开一个终端并运行：
