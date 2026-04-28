@@ -1,0 +1,15 @@
+[2026-04-28 15:28:51] 
+[2026-04-28 15:28:51] === Pre-flight Checklist ===
+[2026-04-28 15:28:51] [ERROR] Failed to load DirectML! Reason: No module named 'torch_directml'
+[2026-04-28 15:28:51] [INFO] Device set to: cuda
+[2026-04-28 15:28:51] [INFO] MONAI UNet Initialized. Total params: 25,969,628
+[2026-04-28 15:28:51] [INFO] Model weight path is ./output/weights/SpleenSeg_UNet_model.pth
+[2026-04-28 15:28:51] [INFO] Dataset loaded. Test: 7 files
+[2026-04-28 15:28:51] [INFO] Dataloaders ready. Train Batch Size: 1
+[2026-04-28 15:28:51] ============================
+[2026-04-28 15:28:51] 
+[2026-04-28 15:28:51] ==== Evaluation Started ===✈
+[2026-04-28 15:29:12] 
+[2026-04-28 15:29:12] ======= Evaluation Summary (MONAI) ======
+[2026-04-28 15:29:12] Average 3D Dice : 89.91% | Time : 0m 20s
+[2026-04-28 15:29:12] =========================================

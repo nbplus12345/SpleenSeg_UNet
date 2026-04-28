@@ -12,11 +12,12 @@ from monai.transforms import (
     AsDiscreted,
     Compose,
     EnsureChannelFirstd,
+    GaussianSmoothd,  # <-- 新增：高斯低通滤波器
     KeepLargestConnectedComponentd,
     LoadImaged,
+    RandGaussianNoised,  # <-- 新增：加噪模块
     ScaleIntensityRanged,
 )
-
 from utils.config_utils import get_args, load_config
 from utils.logger_utils import Logger
 
@@ -81,6 +82,15 @@ test_transforms = Compose(
         ScaleIntensityRanged(
             keys=["image"], a_min=-160.0, a_max=240.0, b_min=0.0, b_max=1.0, clip=True
         ),
+        # =================================================================
+        # 实验一 (Baseline)   : 下面两行都注释掉 (纯净测试)
+        # 实验二 (Noise)      : 只取消注释第一行 (高频噪声污染)
+        # 实验三 (Noise+Filter): 下面两行都取消注释 (滤波恢复信号)
+        # =================================================================
+        # 1. 模拟低剂量 CT 产生的高频量子噪声 (std 越大 强度较大，方便看效果)
+        RandGaussianNoised(keys=["image"], prob=1.0, mean=0.0, std=0.3),
+        # 2. 引入高斯低通滤波器滤除高频噪声 (sigma 越大，截止频率越低，平滑越强)
+        # GaussianSmoothd(keys=["image"], sigma=0.5),
     ]
 )
 

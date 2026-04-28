@@ -1,37 +1,45 @@
-# 基于U-Net的脾脏分割（MONAI重构版）（Spleen Segmentation Based on U-Net）
+# 基于频域滤波与 U-Net 的抗噪脾脏分割系统
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org/)
 ![UNet](https://img.shields.io/badge/Model-U--Net-success?style=flat-square)
 ![MONAI|94](https://img.shields.io/badge/MONAI-v1.5.2-blue)
 ## 项目简介 / Introduction/Abstract
-本项目最初是一个基于纯 **PyTorch** 实现的 2D 脾脏器官分割模型，主要针对 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集图像进行自动分割。
-为满足医疗影像的工业级落地需求，本项目在底层架构上进行了**全盘重构**，全面接入了 **MONAI** 医疗深度学习框架，从“手工作坊式的 2D 脚本”跃升为“端到端 (End-to-End) 的 3D 医疗影像流水线”。
-本人意在通过该项目掌握 **U-Net** 网络以及 **MONAI** 框架的构造与使用。
+本项目是一个端到端 (End-to-End) 的 3D 医疗影像分割流水线，主要针对 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集进行自动分割。项目底层架构全面接入了 **MONAI** 医疗深度学习框架，实现了工业级的极速训练与推理。
+
+**【核心研究方向：信号频域鲁棒性分析】** 
+除了常规的深度学习分割，本项目着重探讨了 **传统信号处理理论在深度学习中的价值**。为探究真实临床低剂量 CT 扫描场景下的高频量子噪声干扰，本项目设计了**频域偏移鲁棒性消融实验**：通过引入加性高斯白噪声（模拟高频干扰）与高斯低通滤波器（信号频域修复），验证了经典信号系统作为深度学习前置预处理模块的必要性与局限性。
 ## 快速预览 / Quick Preview
 ![train_monai](train_monai.png)
 ![tensorboard_monai](tensorboard_monai.png)
 
-**本次 MONAI 重构的核心亮点包括：** 
-* **极速持久化缓存 (Persistent Caching)**：弃用原版产生大量 I/O 碎片的 `.npy` 中间文件，采用 `PersistentDataset` 实现带哈希校验的 3D 原图持久化缓存，完美兼顾极速读取与动态数据增强。 
-* **降维打击 (Sliding Window Inference)**：彻底消灭了原版评估代码中繁琐的手工 2D 切片与 3D 拼接循环。引入滑动窗口推理，支持动态 Batch 打包与边缘高斯平滑融合 (Gaussian Blending)。 
-* **声明式后处理 (Pipeline Post-processing)**：弃用原版基于 `scipy` 的连通域计算和 `SimpleITK` 的坐标拷贝，全面采用 MONAI 字典流水线，一键实现概率激活、二值化、最大连通域保留，并自动还原保存 NIfTI 空间物理元数据。
-* **引入了间隔验证机制**：优化了验证逻辑，从逐步验证切换为基于间隔的周期性验证，大幅减少了验证集的冗余计算，提升了整体训练效率。
+**本次 MONAI 架构与信号系统的核心亮点包括：** 
+* **信号频域鲁棒性分析 (Signal Robustness Analysis)**：设计了包含“纯净信号”、“高频噪声污染”、“低通滤波恢复”的完整对照实验。通过 2D-FFT 频谱分析与 Dice 精度量化，深度剖析了线性滤波器在“去噪”与“器官边缘保真”之间的 Trade-off。 
+* **极速持久化缓存 (Persistent Caching)**：采用 `PersistentDataset` 实现带哈希校验的 3D 原图持久化缓存，完美兼顾极速读取与动态数据增强。 
+* **降维打击 (Sliding Window Inference)**：引入滑动窗口推理，支持动态 Batch 打包与边缘高斯平滑融合 (Gaussian Blending)，防止信号块拼接伪影。 
+* **声明式后处理 (Pipeline Post-processing)**：全面采用 MONAI 字典流水线，将网络输出概率激活并提取最大连通域（作为一种非线性空间低通滤波），自动还原保存 NIfTI 空间物理元数据。
 ## 网络架构 / Network Architecture
-本项目使用 **MONAI** 官方实现的 **U-Net** 网络，在保持经典“对称型”编码-解码结构的基础上，针对医疗影像特征进行了深度优化，基本构造如下：
+本项目使用 **MONAI** 官方实现的 **U-Net** 网络，从信号处理的视角来看，该架构在保持经典“对称型”编码-解码结构的基础上，针对医疗影像特征进行了深度优化，基本构造如下：
 ![unet](img.png)
 如上图所示，我们网络的核心架构特性如下： 
-1. **残差单元集成 (Residual Units)**： 重构版将 `num_res_units` 设为 2。在每一层特征提取中引入了残差连接（Residual Learning），有效缓解了深层网络的梯度消失问题，使模型在验证集上的收敛速度较原版提升了约 30%。 
-2. **高性能算子组合**： 
-	* **激活函数**：弃用传统 ReLU，全面采用 **PReLU** (Parametric ReLU)，赋予网络学习负区间斜率的能力，进一步捕捉微弱的组织边缘特征。 
-	* **归一化层**：集成 **Instance Normalization**，相比 Batch Normalization，在小批次（Batch Size=1/2）的医疗影像训练中具有更强的鲁棒性。 
-3. **多尺度特征对齐**： 通过 `channels=(64, 128, 256, 512, 1024)` 的 5 阶跨度设计，配合 `strides=(2, 2, 2, 2)` 的下采样策略，使网络能在大尺度解剖结构（脾脏整体位置）与细粒度局部特征（器官边界）之间取得最优平衡。 
-4. **轻量化跳跃连接 (Skip Connections)**： 优化了特征拼接（Concat）后的卷积逻辑，确保浅层空间信息能无损传递至解码器，从而实现像素级的精准边缘还原。
+1. **下采样与低通特征提取**：通过 `strides=(2, 2, 2, 2)` 的下采样策略（Decimation），网络逐层滤除高频细节，提取脾脏主体位置的低频（全局）信号特征。 
+2. **残差单元集成 (Residual Units)**：引入残差连接（Residual Learning），有效缓解了深层网络的信号梯度消失问题，使模型在验证集上的收敛速度提升了约 30%。 
+3. **跳跃连接的高频补偿 (High-Frequency Compensation)**：优化了特征拼接（Concat）逻辑，将 Encoder 浅层的高频空间信号（器官边缘细节）无损传递至解码器，弥补因下采样丢失的高频分辨率。
 ## 结果与性能 / Results
 得益于 MONAI 的动态数据增强（随机 3D 切片采样）与长时间周期的训练策略，本模型在约 200 轮（Epochs）的训练后，展现出了极强的泛化能力。
-该模型通过 230 轮的训练，在验证集上达到了 **95.59%** 的 Dice 分数。在测试集上达到了 **94.89%** 的 3D 平均 Dice 分数，完美对标甚至超越了原版离线 2D 切片的精度极限。详情见 **logs/** 中的训练与评估日志。
+我们在测试集上进行了三组信号干扰与恢复消融实验： 
 
-**分割后效果如图所示：**
+| 实验组别                 | 信号处理方案                  | 3D 平均 Dice 分数 | 现象说明                                                               |     |
+| :------------------- | :---------------------- | :------------ | :----------------------------------------------------------------- | --- |
+| **Exp 1: Baseline**  | 纯净信号测试                  | **94.84%**    | 模型具备极高的特征提取上限。                                                     |     |
+| **Exp 2: Corrupted** | 引入高频高斯白噪声 (std=0.3)     | **89.91%**    | 频域被高频能量打乱，纯 AI 模型性能大幅下降。                                           |     |
+| **Exp 3: Restored**  | 噪声 + 高斯低通滤波 (sigma=0.5) | **93.57%**    | 抑制了外围高频噪声，信噪比(SNR)提升，准确率显著回升。未完全恢复原分数的原因为：线性滤波不可避免地造成了微弱的器官高频边缘丢失。 |     |
+
+**基准模型分割后效果如图所示：**
 ![spleen_seg_monai](spleen_seg_monai.png)
+
+**三组实验的对照如图所示：**
+![Signal_Ablation_Study](Signal_Ablation_Study.png)
+*注：第一列为原始基准环境，第二列为引入噪声的环境，第三列为进行滤波处理后的环境。绿色曲线为专家标注的脾脏边缘，红色曲线为模型预测的边缘。*
 ## 环境配置 / Installation
 
 本项目具有**高兼容性与跨平台适配**，已在以下多种操作系统与硬件加速环境中完成了严格的训练与测试：
@@ -46,7 +54,7 @@
 得益于全面接入 MONAI 医疗影像流水线，本重构版大幅精简了底层依赖，**彻底移除了原版对 `scipy`、`SimpleITK` 以及 `OpenCV` 的硬性依赖**，所有 3D I/O 读取、物理元数据保留与后处理操作均由 MONAI 原生接管，详细的环境要求在 `requirements.txt` 中，核心库要求如下：
 * **Python** >= 3.9
 * **PyTorch** >= 2.0.0
-* **MONAI** = 1.5.2
+* **MONAI** = 1.5.2
 
 我们推荐使用 Conda 管理环境，具体命令如下：
 ### 1、克隆仓库
@@ -72,7 +80,7 @@ pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu12
 pip install torch torchvision torchaudio
 pip install torch-directml
 ```
-### 3、安装项目依赖 (一键安装剩余的依赖)
+### 4、安装项目依赖 (一键安装剩余的依赖)
 ```bash
 pip install -r requirements.txt
 ```
@@ -121,11 +129,8 @@ python train_monai.py --config ./config/config.yaml
 ```Bash
 python evaluate_monai.py --config ./config/config.yaml
 ```
-### 3. 查看分割结果（Segmentation）
-在 config/config.yaml 中配置待分割的 CT 文件路径以及输出路径，运行分割脚本：
-```Bash
-python inference_monai.py --config ./config/config.yaml
-```
+### 3. 生成信号鲁棒性可视化报告 (Signal Ablation)
+运行专门编写的绘图脚本，它将自动注入噪声并应用滤波器，生成包含空间域、频域 FFT 及分割轮廓叠加的超清对比大图 
 ### 4. 实时训练监控（TensorBoard）
 本项目深度集成了 TensorBoard，用于实时监控训练/验证 Loss 以及 Dice 分数的 S 型爬升曲线。
 在训练开始后，重新打开一个终端并运行：
@@ -133,9 +138,4 @@ python inference_monai.py --config ./config/config.yaml
 tensorboard --logdir=./output/tensorboard --port=6006
 ```
 打开浏览器访问 `http://localhost:6006` 即可查看。
-## 后续计划 (To-Do)
----
-- [ ] 改进日志，记录显示整体训练时间
-- [ ] 使用 **Weights & Biases (W&B)** 代替 **TensorBoard**
-- [ ] 尝试引进 **AMP** 混合精度训练
-- [ ] 进入 **3D UNet** 训练
+
