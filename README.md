@@ -3,7 +3,7 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org/)
 ![UNet](https://img.shields.io/badge/Model-U--Net-success?style=flat-square)
 ![MONAI|94](https://img.shields.io/badge/MONAI-v1.5.2-blue)
-## 项目简介 / Introduction/Abstract
+## 项目简介 / Introduction
 本项目是一个端到端 (End-to-End) 的 3D 医疗影像分割流水线，主要针对 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集进行自动分割。项目底层架构全面接入了 **MONAI** 医疗深度学习框架，实现了工业级的极速训练与推理。
 
 **【核心研究方向：信号频域鲁棒性分析】** 
