@@ -7,6 +7,11 @@
 本项目最初是一个基于纯 **PyTorch** 实现的 2D 脾脏器官分割模型（相关代码仍保留在 [**`main`**](https://github.com/nbplus12345/SpleenSeg_UNet/tree/main) 分支 中），主要针对 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集图像进行自动分割。
 为满足医疗影像的工业级落地需求，本项目在底层架构上进行了**全盘重构**，全面接入了 **MONAI** 医疗深度学习框架，从“手工作坊式的 2D 脚本”跃升为“端到端 (End-to-End) 的 3D 医疗影像流水线”。
 本人意在通过该项目掌握 **U-Net** 网络以及 **MONAI** 框架的构造与使用。
+
+本人后期对该项目做了一篇较完整的复盘，主要记录了本人通过 2D U-Net 脾脏 CT 分割项目过渡的学习过程，包括 NIfTI 数据处理、病例级数据划分、窗宽窗位归一化、3D volume 切成 2D slice、空白切片处理、U-Net 结构、DiceLoss、推理阶段 2D 预测重建为 3D mask，以及 MONAI 重构版与手写版流程对比等内容。
+
+博客链接：[从猫狗分类到医学影像分割：基于 2D U-Net 的脾脏 CT 分割项目复盘](https://blog.csdn.net/weixin_53384391/article/details/161930030)
+
 ## 快速预览 / Quick Preview
 ![train_monai](train_monai.png)
 ![tensorboard_monai](tensorboard_monai.png)
@@ -77,7 +82,7 @@ pip install torch-directml
 pip install -r requirements.txt
 ```
 ## 数据集准备 / Data Preparation
-本项目使用公开的 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集，包含 **82** 例患者脾脏部位的 NIfTI 数据。
+本项目使用公开的 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集，包含 **41** 例患者脾脏部位的 NIfTI 数据。
 1. 请前往 [**Medical Segmentation Decathlon (MSD)**](http://medicaldecathlon.com/dataaws/) 下载数据 **Task09_Spleen**。
 2. 解压后将文件夹内的 **imagesTr** 与 **labelsTr** 文件夹移至 **dataset** 文件夹内，其余可自行删除。
 3. 初始数据目录结构应如下所示（忽略 ._ 开头的缓存文件）：
@@ -137,5 +142,9 @@ tensorboard --logdir=./output/tensorboard --port=6006
 ---
 - [ ] 改进日志，记录显示整体训练时间
 - [ ] 使用 **Weights & Biases (W&B)** 代替 **TensorBoard**
-- [ ] 尝试引进 **AMP** 混合精度训练
-- [ ] 进入 **3D UNet** 训练
+- [x] 尝试引进 **AMP** 混合精度训练
+- [x] 进入 **3D UNet** 训练
+
+## 开源协议
+
+本项目基于 MIT License 开源，允许自由使用、修改和分发。详细条款请见 [LICENSE](./LICENSE) 文件。
