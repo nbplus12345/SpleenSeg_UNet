@@ -85,7 +85,7 @@ pip install torch-directml
 pip install -r requirements.txt
 ```
 ## 数据集准备 / Data Preparation
-本项目使用公开的 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集，包含 **82** 例患者脾脏部位的 NIfTI 数据。
+本项目使用公开的 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集，包含 **41** 例患者脾脏部位的 NIfTI 数据。
 1. 请前往 [**Medical Segmentation Decathlon (MSD)**](http://medicaldecathlon.com/dataaws/) 下载数据 **Task09_Spleen**。
 2. 解压后将文件夹内的 **imagesTr** 与 **labelsTr** 文件夹移至 **dataset** 文件夹内，其余可自行删除。
 3. 初始数据目录结构应如下所示（忽略 ._ 开头的缓存文件）：
