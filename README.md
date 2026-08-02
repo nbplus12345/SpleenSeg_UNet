@@ -1,79 +1,81 @@
-# 基于 2D U-Net的脾脏分割（Spleen Segmentation Based on 2D U-Net）
+# Spleen Segmentation Based on 2D U-Net
+[English](./README.md) | [简体中文](./README_zh-CN.md)
+
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org/)
 ![UNet](https://img.shields.io/badge/Model-U--Net-success?style=flat-square)
-## 项目简介 / Introduction
-本项目是一个基于 **2D U-Net** 的脾脏器官分割模型，主要针对 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集图像进行自动分割。本人意在通过该项目掌握 **2D U-Net** 网络的构造与使用。
+## Project Overview / Introduction
+This project is a spleen segmentation model based on **2D U-Net**, designed primarily to automatically segment images from the **Task09_Spleen** dataset of the **Medical Segmentation Decathlon (MSD)**. I created this project to learn how to construct and use a **2D U-Net** network.
 
-本人后期对该项目做了一篇较完整的复盘，主要记录了本人通过 2D U-Net 脾脏 CT 分割项目过渡的学习过程，包括 NIfTI 数据处理、病例级数据划分、窗宽窗位归一化、3D volume 切成 2D slice、空白切片处理、U-Net 结构、DiceLoss、推理阶段 2D 预测重建为 3D mask，以及 MONAI 重构版与手写版流程对比等内容。
+I later wrote a fairly comprehensive retrospective on the project. It mainly documents my learning journey through the 2D U-Net spleen CT segmentation project, including NIfTI data processing, case-level data splitting, window width and window level normalization, slicing 3D volumes into 2D slices, blank-slice handling, the U-Net architecture, DiceLoss, reconstructing 2D predictions into 3D masks during inference, and a comparison between the MONAI refactored and handwritten workflows.
 
-博客链接：[从猫狗分类到医学影像分割：基于 2D U-Net 的脾脏 CT 分割项目复盘](https://blog.csdn.net/weixin_53384391/article/details/161930030)
+Blog: [From Cat-and-Dog Classification to Medical Image Segmentation: A Retrospective on 2D U-Net Spleen CT Segmentation](https://blog.csdn.net/weixin_53384391/article/details/161930030)
 
-## 快速预览 / Quick Preview
+## Quick Preview / Quick Preview
 ![tensorboard_preview.png](tensorboard_preview.png)
 ![training_curves.png](training_curves.png)
-## 网络架构 / Network Architecture
-本项目使用经典的 **U-Net** 网络，基本构造如下。
+## Network Architecture / Network Architecture
+This project uses the classic **U-Net** network, whose basic structure is shown below.
 ![img.png](img.png)
-如上图所示，我们的网络主要由以下几个核心组件构成： 
-1. **[双层卷积基础块 (DoubleConv)]**：由连续的两次 `Conv2d -> BatchNorm2d -> ReLU` 堆叠而成。借助批量归一化 (Batch Normalization) 显著缓解内部协变量偏移。
-2. **[全卷积编码器 (Encoder)]**：采用 4 阶下采样结构。利用双层卷积将特征通道数从 64 逐级扩展至网络底部的 1024。
-3. **[跳跃连接机制 (Skip Connections)]**：在 U 型结构的同一层级水平搭建桥梁，将编码器中的浅层特征图，直接传递并拼接 (Concatenation) 到解码器对应的特征图中。
-4. **[上采样解码器 (Decoder)]**：采用转置卷积 (ConvTranspose2d) 作为上采样算子，逐层将深层语义特征图的空间分辨率放大 2 倍并减半通道数。在融合了跳跃连接传来的细粒度特征后，再经过卷积层进行特征解码，最后通过 $1 \times 1$ 卷积层将通道数降维至类别数 (单通道)，输出脾脏的 2D 分割掩膜 (Mask) 概率图。
-## 结果与性能 / Results
-该模型通过 11 轮的训练，在验证集上达到了 **94.44%** 的 Dice 分数。在测试集上达到了 **94.74%** 的 Dice 分数，详情见 **logs/** 中的训练与评估日志。
+As shown above, the network consists mainly of the following core components: 
+1. **[Double Convolution Block (DoubleConv)]**: Two consecutive `Conv2d -> BatchNorm2d -> ReLU` stacks. Batch Normalization significantly mitigates internal covariate shift.
+2. **[Fully Convolutional Encoder (Encoder)]**: Uses a four-stage downsampling structure. Double convolution gradually expands the number of feature channels from 64 to 1024 at the bottom of the network.
+3. **[Skip Connections]**: Bridges matching levels of the U-shaped architecture, directly passing and concatenating shallow feature maps from the encoder with the corresponding feature maps in the decoder.
+4. **[Upsampling Decoder (Decoder)]**: Uses transposed convolution (ConvTranspose2d) as the upsampling operator, doubling the spatial resolution of deep semantic feature maps and halving the number of channels at each stage. After merging the fine-grained features delivered by the skip connections, convolutional layers decode the features. Finally, a $1 \times 1$ convolution reduces the number of channels to the number of classes (one channel) and outputs a probability map for the 2D spleen segmentation mask.
+## Results and Performance / Results
+After 11 epochs of training, the model achieved a **94.44%** Dice score on the validation set and a **94.74%** Dice score on the test set. See the training and evaluation logs in **logs/** for details.
 
-**分割后效果如图所示：**
+**The segmentation result is shown below:**
 ![spleen_3d_segmentation.png](spleen_3d_segmentation.png)
-## 环境配置 / Installation
+## Environment Setup / Installation
 
-本项目具有**高兼容性与跨平台适配**，已在以下多种操作系统与硬件加速环境中完成了严格的训练与测试：
+This project offers **high compatibility and cross-platform support**. It has been thoroughly trained and tested on the following operating systems and hardware acceleration environments:
 
-| 操作系统                           | 计算设备 / GPU                 | 硬件后端     | 版本                                            |
+| Operating System | Compute Device / GPU | Hardware Backend | Version |
 | :----------------------------- | :------------------------- | :------- | :-------------------------------------------- |
 | **Windows 11**                 | NVIDIA RTX 5060 8G         | CUDA     | PyTorch-2.8.0+cu128                           |
 | **Linux (Ubuntu 24.04.4 LTS)** | AMD Radeon RX 7900 XTX 24G | ROCm     | PyTorch-2.11.0+rocm7.2                        |
-| **Windows 11**                 | AMD Radeon 780M 核显         | DirectML | PyTorch-2.3.1+CPU<br>DirectML-0.2.2.dev240614 |
+| **Windows 11**                 | AMD Radeon 780M integrated GPU | DirectML | PyTorch-2.3.1+CPU<br>DirectML-0.2.2.dev240614 |
 
-### 核心依赖项
-详细的环境要求在 `requirements.txt` 中，核心库要求如下：
+### Core Dependencies
+Detailed environment requirements are provided in `requirements.txt`. The core library requirements are:
 * **Python** >= 3.9
 * **PyTorch** >= 2.0.0
-* **医学影像处理库**: SimpleITK, Nibabel
+* **Medical image processing libraries**: SimpleITK, Nibabel
 
-我们推荐使用 Conda 管理环境，具体命令如下：
-### 1、克隆仓库
+We recommend using Conda to manage the environment. The commands are as follows:
+### 1. Clone the Repository
 ```bash
 git clone -b main --single-branch https://github.com/nbplus12345/SpleenSeg_UNet.git
 cd SpleenSeg_UNet
 ```
-### 2、创建激活conda环境
+### 2. Create and Activate the Conda Environment
 ```bash
 conda create -n SpleenSeg-UNet python=3.9 -y
 conda activate SpleenSeg-UNet
 ```
-### 3. 安装核心深度学习框架 (PyTorch)
-请根据你电脑的硬件情况，选择以下【其中一种】方式安装 PyTorch：
+### 3. Install the Core Deep Learning Framework (PyTorch)
+Choose **one** of the following PyTorch installation methods based on your computer hardware:
 
-* 选项 A：你有 NVIDIA 独立显卡（推荐，速度最快）
+* Option A: You have a dedicated NVIDIA GPU (recommended and fastest)
 ```Bash
 pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 ```
-* 选项 B：你只有 CPU，或者使用 Mac 电脑，则跳过该步骤
-* 选项 C：你使用 AMD 显卡或想使用 DirectML 后端
+* Option B: You only have a CPU or use a Mac; skip this step
+* Option C: You use an AMD GPU or want to use the DirectML backend
 ```Bash
 pip install torch torchvision torchaudio
 pip install torch-directml
 ```
-### 4、安装项目依赖 (一键安装剩余的依赖)
+### 4. Install Project Dependencies (install all remaining dependencies at once)
 ```bash
 pip install -r requirements.txt
 ```
-## 数据集准备 / Data Preparation
-本项目使用公开的 **Medical Segmentation Decathlon (MSD)** 中的 **Task09_Spleen（脾脏）** 数据集，包含 **41** 例患者脾脏部位的 NIfTI 数据。
-1. 请前往 [**Medical Segmentation Decathlon (MSD)**](http://medicaldecathlon.com/dataaws/) 下载数据 **Task09_Spleen**。
-2. 解压后将文件夹内的 **imagesTr** 与 **labelsTr** 文件夹移至 **dataset** 文件夹内，其余可自行删除。
-3. 初始数据目录结构应如下所示（忽略 ._ 开头的缓存文件）：
+## Data Preparation / Data Preparation
+This project uses the public **Task09_Spleen** dataset from the **Medical Segmentation Decathlon (MSD)**, containing NIfTI data from **41** patients.
+1. Visit [**Medical Segmentation Decathlon (MSD)**](http://medicaldecathlon.com/dataaws/) and download **Task09_Spleen**.
+2. After extraction, move the **imagesTr** and **labelsTr** folders into the **dataset** folder. The remaining files may be deleted.
+3. The initial data directory should have the following structure (ignore cache files beginning with ._):
 ```Plaintext
 dataset/
 ├── imagesTr/
@@ -83,11 +85,11 @@ dataset/
     ├── spleen_2.nii.gz
     ├── ...
 ```
-4. 运行数据集切分脚本，该脚本会自动从原始训练集中切分出验证集与测试集：
+4. Run the dataset splitting script, which automatically creates validation and test sets from the original training set:
 ```Bash
 python data/split_dataset_utils.py
 ```
-5. 切分后的数据目录结构如下所示（可自行选择将 imagesTr 与 labelsTr 删除）：
+5. The split data directory has the following structure (you may delete imagesTr and labelsTr if desired):
 ```Plaintext
 dataset/
 ├── imagesTr/
@@ -102,40 +104,40 @@ dataset/
     ├── images/
     └── labels/
 ```
-6. 由于本项目采用的是 2D U-Net，我们需要预先将 3D 的 `.nii.gz` 数据在 Z 轴上逐层切分为 2D 的 `.npy` 数组，并进行窗宽窗位（Windowing）归一化以及滤除无效的空白背景切片。请运行以下预处理脚本：
+6. Because this project uses a 2D U-Net, the 3D `.nii.gz` data must first be sliced along the Z-axis into 2D `.npy` arrays, normalized using CT window width and window level, and filtered to remove invalid blank background slices. Run the following preprocessing script:
 ```Bash
 python data/data_preprocess_utils.py
 ```
-## 训练与测试 / Training & Evaluation
-### 1. 训练 (Training)
-对于各类超参数以及数据地址，可以在 config/config.yaml 中修改，也可以增加新的 yaml 文件。训练命令如下：
+## Training and Testing / Training & Evaluation
+### 1. Training (Training)
+Hyperparameters and data paths can be modified in config/config.yaml, and additional YAML files may also be added. Run training with:
 ```Bash
 python train.py --config ./config/config.yaml
 ```
-- 本模型带有 **断点续训** 的功能，每轮自动保存 checkpoint ，但训练中断需要重新训练时，需要在 config.yaml 中修改 **resume_training** 为 true 。
-- 本项目同时集成了 **TensorBoard** 进行实时可视化。在训练期间，你可以随时监控 Loss 曲线、验证集 Dice 系数的动态变化。打开一个新的终端，激活虚拟环境后输入以下命令即可启动监控面板：
+- This model supports **resuming interrupted training** and automatically saves a checkpoint after every epoch. To resume after an interruption, set **resume_training** to true in config.yaml.
+- This project also integrates **TensorBoard** for real-time visualization. During training, you can monitor the Loss curve and changes in the validation Dice coefficient at any time. Open a new terminal, activate the virtual environment, and run the following command to launch the dashboard:
 ```bash
 tensorboard --logdir=output/tensorboard --reload_interval=30
 ```
-*命令运行成功后，在浏览器中访问 `http://localhost:6006/` 即可进入可视化大屏。*
-### 2. 测试与评估 (Evaluation)
-评估脚本会自动计算平均 Dice (DSC) 指标：
+*After the command starts successfully, visit `http://localhost:6006/` in a browser to open the visualization dashboard.*
+### 2. Testing and Evaluation (Evaluation)
+The evaluation script automatically calculates the mean Dice (DSC):
 ```Bash
 python evaluate.py --config ./config/config.yaml
 ```
-### 3. 查看分割结果（Segmentation）
-在 config/config.yaml 中配置待分割的 CT 文件路径以及输出路径，运行分割脚本：
+### 3. View Segmentation Results (Segmentation)
+Configure the input CT path and output path in config/config.yaml, then run the segmentation script:
 ```Bash
 python inference.py --config ./config/config.yaml
 ```
-### 4. 实时训练监控（TensorBoard）
-本项目深度集成了 TensorBoard，用于实时监控训练/验证 Loss 以及 Dice 分数的 S 型爬升曲线。
-在训练开始后，重新打开一个终端并运行：
+### 4. Real-Time Training Monitoring (TensorBoard)
+This project deeply integrates TensorBoard to monitor training/validation Loss and the S-shaped rise of the Dice score in real time.
+After training begins, open another terminal and run:
 ```Bash
 tensorboard --logdir=./output/tensorboard --port=6006
 ```
-打开浏览器访问 `http://localhost:6006` 即可查看。
+Open `http://localhost:6006` in a browser to view it.
 
-## 开源协议
+## License
 
-本项目基于 MIT License 开源，允许自由使用、修改和分发。详细条款请见 [LICENSE](./LICENSE) 文件。
+This project is open-sourced under the MIT License and may be freely used, modified, and distributed. See the [LICENSE](./LICENSE) file for details.
