@@ -140,13 +140,6 @@ After training begins, open another terminal and run:
 tensorboard --logdir=./output/tensorboard --port=6006
 ```
 Open `http://localhost:6006` in a browser to view it.
-## Future Plans (To-Do)
----
-- [ ] Improve the logs to record and display total training time
-- [ ] Use **Weights & Biases (W&B)** instead of **TensorBoard**
-- [x] Introduce **AMP** mixed-precision training
-- [x] Move to **3D UNet** training
-
 ## License
 
 This project is open-sourced under the MIT License and may be freely used, modified, and distributed. See the [LICENSE](./LICENSE) file for details.
