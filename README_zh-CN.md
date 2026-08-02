@@ -140,13 +140,6 @@ python inference_monai.py --config ./config/config.yaml
 tensorboard --logdir=./output/tensorboard --port=6006
 ```
 打开浏览器访问 `http://localhost:6006` 即可查看。
-## 后续计划 (To-Do)
----
-- [ ] 改进日志，记录显示整体训练时间
-- [ ] 使用 **Weights & Biases (W&B)** 代替 **TensorBoard**
-- [x] 尝试引进 **AMP** 混合精度训练
-- [x] 进入 **3D UNet** 训练
-
 ## 开源协议
 
 本项目基于 MIT License 开源，允许自由使用、修改和分发。详细条款请见 [LICENSE](./LICENSE) 文件。
