@@ -144,3 +144,6 @@ tensorboard --logdir=./output/tensorboard --port=6006
 ```
 打开浏览器访问 `http://localhost:6006` 即可查看。
 
+## 开源协议
+
+本项目基于 MIT License 开源，允许自由使用、修改和分发。详细条款请见 [LICENSE](./LICENSE) 文件。
