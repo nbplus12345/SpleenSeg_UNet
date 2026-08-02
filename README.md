@@ -143,3 +143,7 @@ After training begins, open another terminal and run:
 tensorboard --logdir=./output/tensorboard --port=6006
 ```
 Open `http://localhost:6006` in a browser to view it.
+
+## License
+
+This project is open-sourced under the MIT License and may be freely used, modified, and distributed. See the [LICENSE](./LICENSE) file for details.
